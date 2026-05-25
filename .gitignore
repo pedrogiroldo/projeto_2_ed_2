@@ -1,0 +1,5 @@
+*.o
+ted
+.omx
+*_test
+saida/
