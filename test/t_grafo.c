@@ -1,9 +1,14 @@
 #include "grafo.h"
 
 #include "unity.h"
+#include <math.h>
 
 void setUp(void) {}
 void tearDown(void) {}
+
+static void assert_double_igual(double esperado, double atual) {
+    TEST_ASSERT_TRUE(fabs(esperado - atual) < 1e-9);
+}
 
 void test_grafo_criar_destruir(void) {
     Grafo g = grafo_criar();
@@ -63,8 +68,8 @@ void test_grafo_buscar_vertice(void) {
     void *v = grafo_buscar_vertice(g, "P1");
     TEST_ASSERT_NOT_NULL(v);
     TEST_ASSERT_EQUAL_STRING("P1", grafo_vertice_id(v));
-    TEST_ASSERT_EQUAL_DOUBLE(1.5, grafo_vertice_x(v));
-    TEST_ASSERT_EQUAL_DOUBLE(2.5, grafo_vertice_y(v));
+    assert_double_igual(1.5, grafo_vertice_x(v));
+    assert_double_igual(2.5, grafo_vertice_y(v));
 
     TEST_ASSERT_NULL(grafo_buscar_vertice(g, "INEXISTENTE"));
 
@@ -108,11 +113,11 @@ void test_grafo_getters_aresta(void) {
     TEST_ASSERT_EQUAL_STRING("av_principal", grafo_aresta_nome(cursor));
     TEST_ASSERT_EQUAL_STRING("CEP_DIR", grafo_aresta_ldir(cursor));
     TEST_ASSERT_EQUAL_STRING("CEP_ESQ", grafo_aresta_lesq(cursor));
-    TEST_ASSERT_EQUAL_DOUBLE(250.0, grafo_aresta_cmp(cursor));
-    TEST_ASSERT_EQUAL_DOUBLE(15.0, grafo_aresta_vm(cursor));
+    assert_double_igual(250.0, grafo_aresta_cmp(cursor));
+    assert_double_igual(15.0, grafo_aresta_vm(cursor));
 
     grafo_aresta_set_vm(cursor, 30.0);
-    TEST_ASSERT_EQUAL_DOUBLE(30.0, grafo_aresta_vm(cursor));
+    assert_double_igual(30.0, grafo_aresta_vm(cursor));
 
     grafo_destruir(g);
 }
