@@ -116,4 +116,7 @@ double grafo_aresta_vm(void *cursor);
 /** Atualiza a velocidade média de uma aresta (usada por mvm e exp) */
 void grafo_aresta_set_vm(void *cursor, double vm);
 
+/** Retorna o i-ésimo vértice (opaco), ou NULL se i fora dos limites */
+void *grafo_vertice_por_indice(Grafo g, int i);
+
 #endif /* GRAFO_H */
