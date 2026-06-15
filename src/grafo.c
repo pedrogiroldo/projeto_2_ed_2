@@ -207,3 +207,8 @@ void grafo_aresta_set_vm(void *cursor, double vm) {
     if (!cursor) return;
     ((Aresta_s *)cursor)->vm = vm;
 }
+
+void *grafo_vertice_por_indice(Grafo grafo, int i) {
+    if (!grafo || i < 0) return NULL;
+    return list_get(((GrafoImpl *)grafo)->vertices, i);
+}
