@@ -144,6 +144,121 @@ void test_svg_writer_rejeita_path_null(void) {
     svg_writer_finalizar(NULL);
 }
 
+/* ---- Extensões do Projeto 2 ---- */
+
+void test_svg_writer_vertice_desenha_circulo_lilas(void) {
+    svg_writer_t *svg = svg_writer_criar(SVG_PATH, 100.0, 100.0);
+    char *contents;
+
+    TEST_ASSERT_NOT_NULL(svg);
+    svg_writer_vertice(svg, 15.0, 25.0);
+    svg_writer_finalizar(svg);
+    svg_writer_destruir(svg);
+
+    contents = read_svg();
+    TEST_ASSERT_NOT_NULL(strstr(contents, "<circle cx=\"15.00\" cy=\"25.00\""));
+    TEST_ASSERT_NOT_NULL(strstr(contents, "#C8A2C8"));
+}
+
+void test_svg_writer_aresta_desenha_linha_seta_e_nome(void) {
+    svg_writer_t *svg = svg_writer_criar(SVG_PATH, 100.0, 100.0);
+    char *contents;
+
+    TEST_ASSERT_NOT_NULL(svg);
+    svg_writer_aresta(svg, 0.0, 0.0, 30.0, 0.0, "Rua A");
+    svg_writer_finalizar(svg);
+    svg_writer_destruir(svg);
+
+    contents = read_svg();
+    /* linha principal */
+    TEST_ASSERT_NOT_NULL(strstr(contents,
+        "x1=\"0.00\" y1=\"0.00\" x2=\"30.00\" y2=\"0.00\""));
+    /* nome no meio */
+    TEST_ASSERT_NOT_NULL(strstr(contents, ">Rua A</text>"));
+    /* ponta de seta: pelo menos 3 linhas (1 principal + 2 asas) */
+    {
+        int count = 0;
+        char *p = contents;
+        while ((p = strstr(p, "<line")) != NULL) { count++; p += 5; }
+        TEST_ASSERT_TRUE(count >= 3);
+    }
+}
+
+void test_svg_writer_linha_pontilhada_vertical_com_label(void) {
+    svg_writer_t *svg = svg_writer_criar(SVG_PATH, 100.0, 100.0);
+    char *contents;
+
+    TEST_ASSERT_NOT_NULL(svg);
+    /* estabelece bounds com um retângulo, depois desenha a linha */
+    svg_writer_retangulo_base(svg, 0.0, 0.0, 100.0, 60.0, "white", "black", 1.0);
+    svg_writer_linha_pontilhada_vertical(svg, 40.0, "R3");
+    svg_writer_finalizar(svg);
+    svg_writer_destruir(svg);
+
+    contents = read_svg();
+    TEST_ASSERT_NOT_NULL(strstr(contents, "stroke-dasharray"));
+    TEST_ASSERT_NOT_NULL(strstr(contents, "x1=\"40.00\""));
+    TEST_ASSERT_NOT_NULL(strstr(contents, ">R3</text>"));
+}
+
+void test_svg_writer_bounding_box_semitransparente(void) {
+    svg_writer_t *svg = svg_writer_criar(SVG_PATH, 100.0, 100.0);
+    char *contents;
+
+    TEST_ASSERT_NOT_NULL(svg);
+    svg_writer_bounding_box(svg, 5.0, 10.0, 50.0, 40.0, "green", 0.5);
+    svg_writer_finalizar(svg);
+    svg_writer_destruir(svg);
+
+    contents = read_svg();
+    TEST_ASSERT_NOT_NULL(strstr(contents, "fill=\"green\""));
+    TEST_ASSERT_NOT_NULL(strstr(contents, "fill-opacity=\"0.50\""));
+    TEST_ASSERT_NOT_NULL(strstr(contents, "width=\"50.00\" height=\"40.00\""));
+}
+
+void test_svg_writer_aresta_grossa(void) {
+    svg_writer_t *svg = svg_writer_criar(SVG_PATH, 100.0, 100.0);
+    char *contents;
+
+    TEST_ASSERT_NOT_NULL(svg);
+    svg_writer_aresta_grossa(svg, 1.0, 2.0, 3.0, 4.0, "red");
+    svg_writer_finalizar(svg);
+    svg_writer_destruir(svg);
+
+    contents = read_svg();
+    TEST_ASSERT_NOT_NULL(strstr(contents, "stroke=\"red\" stroke-width=\"4.00\""));
+    TEST_ASSERT_NOT_NULL(strstr(contents,
+        "x1=\"1.00\" y1=\"2.00\" x2=\"3.00\" y2=\"4.00\""));
+}
+
+void test_svg_writer_percurso_animado(void) {
+    svg_writer_t *svg = svg_writer_criar(SVG_PATH, 100.0, 100.0);
+    char *contents;
+    double pontos[] = { 0.0, 0.0, 10.0, 5.0, 20.0, 0.0 };
+
+    TEST_ASSERT_NOT_NULL(svg);
+    svg_writer_percurso_animado(svg, pontos, 3, "blue", "cam1");
+    svg_writer_finalizar(svg);
+    svg_writer_destruir(svg);
+
+    contents = read_svg();
+    TEST_ASSERT_NOT_NULL(strstr(contents, "<path id=\"cam1\""));
+    TEST_ASSERT_NOT_NULL(strstr(contents, "d=\"M 0.00 0.00 L 10.00 5.00 L 20.00 0.00\""));
+    TEST_ASSERT_NOT_NULL(strstr(contents, "<animateMotion"));
+    TEST_ASSERT_NOT_NULL(strstr(contents, "<mpath href=\"#cam1\"/>"));
+    TEST_ASSERT_NOT_NULL(strstr(contents, ">I</text>"));
+    TEST_ASSERT_NOT_NULL(strstr(contents, ">F</text>"));
+
+    /* n < 2 não desenha path */
+    remove(SVG_PATH);
+    svg = svg_writer_criar(SVG_PATH, 100.0, 100.0);
+    svg_writer_percurso_animado(svg, pontos, 1, "blue", "x");
+    svg_writer_finalizar(svg);
+    svg_writer_destruir(svg);
+    contents = read_svg();
+    TEST_ASSERT_NULL(strstr(contents, "<path"));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_svg_writer_escreve_elementos_basicos);
@@ -154,5 +269,11 @@ int main(void) {
     RUN_TEST(test_svg_writer_x_quadra_removida_liga_vertices);
     RUN_TEST(test_svg_writer_sem_elementos_usa_fallback);
     RUN_TEST(test_svg_writer_rejeita_path_null);
+    RUN_TEST(test_svg_writer_vertice_desenha_circulo_lilas);
+    RUN_TEST(test_svg_writer_aresta_desenha_linha_seta_e_nome);
+    RUN_TEST(test_svg_writer_linha_pontilhada_vertical_com_label);
+    RUN_TEST(test_svg_writer_bounding_box_semitransparente);
+    RUN_TEST(test_svg_writer_aresta_grossa);
+    RUN_TEST(test_svg_writer_percurso_animado);
     return UNITY_END();
 }
