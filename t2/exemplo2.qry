@@ -1,0 +1,6 @@
+@o? R0 a1 S 5
+@o? R1 a3 S 5
+mvm 60 40 40 90 20
+regs 20
+exp 30
+p? R0 R1 green orange

@@ -1,0 +1,8 @@
+3
+v P 15 50
+v Q 65 50
+v R 115 50
+e P Q a1 a2 50 40 Avenida
+e Q P a2 a1 50 40 Avenida
+e Q R a2 a3 50 10 Travessa
+e R Q a3 a2 50 10 Travessa

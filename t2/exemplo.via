@@ -1,0 +1,13 @@
+4
+v A 20 20
+v B 80 20
+v C 20 80
+v D 80 80
+e A B q1 q2 60 30 RuaNorte
+e B A q2 q1 60 30 RuaNorte
+e B D q2 q4 60 30 RuaLeste
+e D B q4 q2 60 30 RuaLeste
+e D C q4 q3 60 30 RuaSul
+e C D q3 q4 60 30 RuaSul
+e C A q3 q1 60 30 RuaOeste
+e A C q1 q3 60 30 RuaOeste

@@ -1,0 +1,5 @@
+@o? R0 q1 N 20
+@o? R1 q4 S 20
+regs 10
+exp 25
+p? R0 R1 blue red
