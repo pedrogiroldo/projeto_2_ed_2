@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define SVG_VIEWBOX_MARGEM 20.0
 #define SVG_BUFFER_INICIAL 1024u
@@ -393,4 +394,176 @@ void svg_writer_quadrado_cpf(svg_writer_t *sw,
                          "none", "red", 1.5);
     svg_writer_texto(sw, x - lado / 2.0 + 1.0, y + 4.0,
                      cpf != NULL ? cpf : "", "6", "red");
+}
+
+/* ======================================================================== */
+/* Extensões do Projeto 2                                                   */
+/* ======================================================================== */
+
+#define SVG_VERTICE_RAIO 2.0
+#define SVG_SETA_TAM 6.0    /* comprimento da ponta da seta */
+#define SVG_ARESTA_GROSSA_STROKE 4.0
+
+void svg_writer_vertice(svg_writer_t *sw, double x, double y) {
+    if (sw == NULL || sw->file == NULL) {
+        return;
+    }
+    svg_writer_expandir_bounds(sw, x - SVG_VERTICE_RAIO, y - SVG_VERTICE_RAIO,
+                               x + SVG_VERTICE_RAIO, y + SVG_VERTICE_RAIO);
+    svg_writer_anexar(sw,
+                      "  <circle cx=\"%.2f\" cy=\"%.2f\" r=\"%.2f\""
+                      " fill=\"#C8A2C8\"/>\n",
+                      x, y, SVG_VERTICE_RAIO);
+}
+
+void svg_writer_aresta(svg_writer_t *sw,
+                       double x1, double y1, double x2, double y2,
+                       const char *nome) {
+    double dx, dy, comprimento, ux, uy, px, py;
+    double base_x, base_y, asa1_x, asa1_y, asa2_x, asa2_y;
+
+    if (sw == NULL || sw->file == NULL) {
+        return;
+    }
+
+    svg_writer_expandir_linha(sw, x1, y1, x2, y2);
+    svg_writer_anexar(sw,
+                      "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\""
+                      " stroke=\"black\" stroke-width=\"1.5\"/>\n",
+                      x1, y1, x2, y2);
+
+    /* Ponta de seta no destino, desenhada como duas linhas curtas */
+    dx = x2 - x1;
+    dy = y2 - y1;
+    comprimento = sqrt(dx * dx + dy * dy);
+    if (comprimento > 1e-9) {
+        ux = dx / comprimento;
+        uy = dy / comprimento;
+        px = -uy; /* perpendicular */
+        py = ux;
+        base_x = x2 - SVG_SETA_TAM * ux;
+        base_y = y2 - SVG_SETA_TAM * uy;
+        asa1_x = base_x + (SVG_SETA_TAM / 2.0) * px;
+        asa1_y = base_y + (SVG_SETA_TAM / 2.0) * py;
+        asa2_x = base_x - (SVG_SETA_TAM / 2.0) * px;
+        asa2_y = base_y - (SVG_SETA_TAM / 2.0) * py;
+        svg_writer_expandir_linha(sw, x2, y2, asa1_x, asa1_y);
+        svg_writer_expandir_linha(sw, x2, y2, asa2_x, asa2_y);
+        svg_writer_anexar(sw,
+                          "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\""
+                          " stroke=\"black\" stroke-width=\"1.5\"/>\n"
+                          "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\""
+                          " stroke=\"black\" stroke-width=\"1.5\"/>\n",
+                          x2, y2, asa1_x, asa1_y,
+                          x2, y2, asa2_x, asa2_y);
+    }
+
+    if (nome != NULL && nome[0] != '\0') {
+        svg_writer_texto(sw, (x1 + x2) / 2.0, (y1 + y2) / 2.0 - 2.0,
+                         nome, "8", "gray");
+    }
+}
+
+void svg_writer_linha_pontilhada_vertical(svg_writer_t *sw, double x,
+                                          const char *label) {
+    double y_topo, y_base;
+
+    if (sw == NULL || sw->file == NULL) {
+        return;
+    }
+
+    if (sw->possui_bounds) {
+        y_topo = sw->min_y;
+        y_base = sw->max_y;
+    } else {
+        y_topo = 0.0;
+        y_base = sw->altura_fallback;
+    }
+
+    svg_writer_expandir_bounds(sw, x - 1.0, y_topo, x + 1.0, y_base);
+    svg_writer_anexar(sw,
+                      "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\""
+                      " stroke=\"red\" stroke-width=\"1.5\""
+                      " stroke-dasharray=\"4,4\"/>\n",
+                      x, y_topo, x, y_base);
+    if (label != NULL && label[0] != '\0') {
+        svg_writer_texto(sw, x + 2.0, y_topo - 2.0, label, "10", "red");
+    }
+}
+
+void svg_writer_bounding_box(svg_writer_t *sw,
+                             double x, double y, double w, double h,
+                             const char *cor, double opacidade) {
+    if (sw == NULL || sw->file == NULL) {
+        return;
+    }
+    svg_writer_expandir_bounds(sw, x, y, x + w, y + h);
+    svg_writer_anexar(sw,
+                      "  <rect x=\"%.2f\" y=\"%.2f\" width=\"%.2f\" height=\"%.2f\""
+                      " fill=\"%s\" fill-opacity=\"%.2f\" stroke=\"%s\""
+                      " stroke-width=\"1\"/>\n",
+                      x, y, w, h,
+                      cor != NULL ? cor : "none", opacidade,
+                      cor != NULL ? cor : "none");
+}
+
+void svg_writer_aresta_grossa(svg_writer_t *sw,
+                              double x1, double y1, double x2, double y2,
+                              const char *cor) {
+    if (sw == NULL || sw->file == NULL) {
+        return;
+    }
+    svg_writer_expandir_linha(sw, x1, y1, x2, y2);
+    svg_writer_anexar(sw,
+                      "  <line x1=\"%.2f\" y1=\"%.2f\" x2=\"%.2f\" y2=\"%.2f\""
+                      " stroke=\"%s\" stroke-width=\"%.2f\""
+                      " stroke-linecap=\"round\"/>\n",
+                      x1, y1, x2, y2,
+                      cor != NULL ? cor : "red", SVG_ARESTA_GROSSA_STROKE);
+}
+
+void svg_writer_percurso_animado(svg_writer_t *sw,
+                                 const double *pontos, int n,
+                                 const char *cor, const char *id_path) {
+    int i;
+    const char *cor_final;
+    const char *id_final;
+
+    if (sw == NULL || sw->file == NULL || pontos == NULL || n < 2) {
+        return;
+    }
+
+    cor_final = (cor != NULL && cor[0] != '\0') ? cor : "blue";
+    id_final = (id_path != NULL && id_path[0] != '\0') ? id_path : "percurso";
+
+    /* Expandir bounds por todos os pontos */
+    for (i = 0; i < n; i++) {
+        double px = pontos[2 * i];
+        double py = pontos[2 * i + 1];
+        svg_writer_expandir_bounds(sw, px - 4.0, py - 4.0, px + 4.0, py + 4.0);
+    }
+
+    /* <path id="..." d="M x0 y0 L x1 y1 ..."/> */
+    svg_writer_anexar(sw,
+                      "  <path id=\"%s\" fill=\"none\" stroke=\"%s\""
+                      " stroke-width=\"3\" d=\"M %.2f %.2f",
+                      id_final, cor_final, pontos[0], pontos[1]);
+    for (i = 1; i < n; i++) {
+        svg_writer_anexar(sw, " L %.2f %.2f", pontos[2 * i], pontos[2 * i + 1]);
+    }
+    svg_writer_anexar(sw, "\"/>\n");
+
+    /* Marcador animado percorrendo o path */
+    svg_writer_anexar(sw,
+                      "  <circle r=\"4\" fill=\"%s\">\n"
+                      "    <animateMotion dur=\"5s\" repeatCount=\"indefinite\">\n"
+                      "      <mpath href=\"#%s\"/>\n"
+                      "    </animateMotion>\n"
+                      "  </circle>\n",
+                      cor_final, id_final);
+
+    /* Marcadores I (início) e F (fim) */
+    svg_writer_texto(sw, pontos[0] - 2.0, pontos[1] - 4.0, "I", "12", cor_final);
+    svg_writer_texto(sw, pontos[2 * (n - 1)] - 2.0, pontos[2 * (n - 1) + 1] - 4.0,
+                     "F", "12", cor_final);
 }
