@@ -158,4 +158,91 @@ void svg_writer_quadrado_cpf(svg_writer_t *sw,
                              double x, double y, double lado,
                              const char *cpf);
 
+/* ======================================================================== */
+/* Extensões do Projeto 2 — grafo viário, registradores, componentes e MST  */
+/* ======================================================================== */
+
+/**
+ * @brief Desenha um vértice do grafo como pequeno círculo lilás em (x, y).
+ *
+ * @param sw Writer de destino.
+ * @param x  Coordenada X do vértice.
+ * @param y  Coordenada Y do vértice.
+ */
+void svg_writer_vertice(svg_writer_t *sw, double x, double y);
+
+/**
+ * @brief Desenha uma aresta direcionada de (x1,y1) para (x2,y2) com seta no
+ *        destino indicando o sentido do tráfego; opcionalmente rotula com @p nome.
+ *
+ * @param sw   Writer de destino.
+ * @param x1   X da origem.
+ * @param y1   Y da origem.
+ * @param x2   X do destino (onde fica a ponta da seta).
+ * @param y2   Y do destino.
+ * @param nome Nome da rua a exibir no meio da aresta (pode ser NULL/"").
+ */
+void svg_writer_aresta(svg_writer_t *sw,
+                       double x1, double y1, double x2, double y2,
+                       const char *nome);
+
+/**
+ * @brief Desenha uma linha vertical pontilhada vermelha na posição @p x,
+ *        cobrindo a altura atual do desenho, com @p label no topo.
+ *
+ * Usada pelo comando @c \@o? para marcar a coordenada de um endereço.
+ *
+ * @param sw    Writer de destino.
+ * @param x     Posição X da linha.
+ * @param label Texto exibido no topo (ex.: nome do registrador). Pode ser NULL.
+ */
+void svg_writer_linha_pontilhada_vertical(svg_writer_t *sw, double x,
+                                          const char *label);
+
+/**
+ * @brief Desenha um retângulo semitransparente (bounding box) para o comando
+ *        @c regs, delimitando uma componente conexa.
+ *
+ * @param sw        Writer de destino.
+ * @param x         X do canto superior esquerdo.
+ * @param y         Y do canto superior esquerdo.
+ * @param w         Largura.
+ * @param h         Altura.
+ * @param cor       Cor de preenchimento (string CSS).
+ * @param opacidade Opacidade do preenchimento em [0,1] (ex.: 0.5 = 50%).
+ */
+void svg_writer_bounding_box(svg_writer_t *sw,
+                             double x, double y, double w, double h,
+                             const char *cor, double opacidade);
+
+/**
+ * @brief Desenha uma aresta grossa (traço espesso) na cor @p cor, usada pelo
+ *        comando @c exp para destacar arestas da AGM.
+ *
+ * @param sw  Writer de destino.
+ * @param x1  X da origem.
+ * @param y1  Y da origem.
+ * @param x2  X do destino.
+ * @param y2  Y do destino.
+ * @param cor Cor do traço (string CSS; ex.: "red").
+ */
+void svg_writer_aresta_grossa(svg_writer_t *sw,
+                              double x1, double y1, double x2, double y2,
+                              const char *cor);
+
+/**
+ * @brief Desenha um percurso animado (comando @c p?): traça o caminho pelos
+ *        pontos, anima um marcador ao longo dele com @c \<animateMotion\>, e
+ *        rotula os extremos com "I" (início) e "F" (fim).
+ *
+ * @param sw      Writer de destino.
+ * @param pontos  Array de coordenadas intercaladas [x0,y0,x1,y1,...] com 2*n valores.
+ * @param n       Número de pontos (>= 2 para desenhar).
+ * @param cor     Cor do traço e do marcador (string CSS).
+ * @param id_path Identificador único do @c \<path\> (referenciado pelo @c \<mpath\>).
+ */
+void svg_writer_percurso_animado(svg_writer_t *sw,
+                                 const double *pontos, int n,
+                                 const char *cor, const char *id_path);
+
 #endif // SVG_WRITER_H
