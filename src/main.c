@@ -65,19 +65,23 @@ static int compose_base(char *out, size_t out_size,
 
 static void desenhar_quadra_visitor(const char *key, const void *record,
                                     size_t record_size, void *user_data) {
-    const quadra_registro_t *q = (const quadra_registro_t *)record;
     svg_writer_t *svg = (svg_writer_t *)user_data;
     (void)key;
     (void)record_size;
-    svg_writer_retangulo_base(svg, q->x, q->y, q->largura, q->altura,
-                              q->cor_preenchimento, q->cor_borda,
-                              q->espessura_borda);
+    svg_writer_retangulo_base(svg,
+                              quadra_registro_x(record),
+                              quadra_registro_y(record),
+                              quadra_registro_largura(record),
+                              quadra_registro_altura(record),
+                              quadra_registro_cor_preenchimento(record),
+                              quadra_registro_cor_borda(record),
+                              quadra_registro_espessura_borda(record));
 }
 
 static void desenhar_mapa_base(extensible_hash_file_t quadras_hf,
                                svg_writer_t *svg) {
     ehf_foreach(quadras_hf, desenhar_quadra_visitor,
-                sizeof(quadra_registro_t), svg);
+                quadra_registro_size(), svg);
 }
 
 static void desenhar_grafo(Grafo g, svg_writer_t *svg) {
@@ -154,7 +158,7 @@ int main(int argc, char **argv) {
              bsd, out_base);
 
     /* ---- 1. .geo → hashfile de quadras + SVG base ---- */
-    quadras_hf = ehf_create(quad_hf_path, 10u, sizeof(quadra_registro_t));
+    quadras_hf = ehf_create(quad_hf_path, 10u, quadra_registro_size());
     if (quadras_hf == NULL) {
         fprintf(stderr, "erro: nao foi possivel criar hashfile de quadras\n");
         return 1;

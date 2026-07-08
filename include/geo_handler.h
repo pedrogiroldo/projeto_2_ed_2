@@ -10,7 +10,7 @@
  *
  * Uso típico:
  * @code
- *   extensible_hash_file_t hf = ehf_create(path, cap, sizeof(quadra_registro_t));
+ *   extensible_hash_file_t hf = ehf_create(path, cap, quadra_registro_size());
  *   svg_writer_t *svg = svg_writer_criar(svg_path, 0, 0);
  *   geo_handler_resultado_t r = geo_handler_processar(geo_path, hf, svg);
  *   printf("%d inseridas, %d erros\n",
@@ -39,7 +39,7 @@ typedef void *geo_handler_resultado_t;
  * se @p svg não for NULL, desenha o retângulo correspondente.
  *
  * @param geo_filepath Caminho para o arquivo .geo (não-NULL).
- * @param quadras_hf   Hashfile aberto com record_size = sizeof(quadra_registro_t).
+ * @param quadras_hf   Hashfile aberto com record_size = quadra_registro_size().
  * @param svg          Writer SVG de destino, ou NULL para omitir o desenho.
  * @return Handle opaco com contadores; liberar com geo_handler_resultado_destruir.
  */

@@ -55,7 +55,7 @@ static void geo_processar_q(const char *linha, const geo_estilo_t *estilo,
     char cep[GEO_CEP_MAX];
     double x, y, w, h;
     quadra_t *q;
-    quadra_registro_t reg;
+    quadra_registro_t *reg;
     ehf_status_t status;
 
     if (sscanf(linha, "q %63s %lf %lf %lf %lf", cep, &x, &y, &w, &h) != 5
@@ -75,13 +75,16 @@ static void geo_processar_q(const char *linha, const geo_estilo_t *estilo,
         return;
     }
 
-    if (quadra_para_registro(q, &reg) == 0) {
+    reg = malloc(quadra_registro_size());
+    if (reg == NULL || quadra_para_registro(q, reg) == 0) {
+        free(reg);
         quadra_destruir(q);
         res->erros++;
         return;
     }
 
-    status = ehf_insert(quadras_hf, cep, &reg, sizeof(reg));
+    status = ehf_insert(quadras_hf, cep, reg, quadra_registro_size());
+    free(reg);
     if (status == EHF_OK) {
         res->quadras_inseridas++;
         if (svg != NULL)

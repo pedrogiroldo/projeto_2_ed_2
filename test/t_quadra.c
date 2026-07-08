@@ -3,6 +3,7 @@
 #include "unity.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 static void assert_double_igual(double esperado, double atual) {
   TEST_ASSERT_TRUE(fabs(esperado - atual) < 0.000001);
@@ -61,20 +62,22 @@ void test_quadra_converte_para_registro_e_recria_quadra(void) {
   quadra_t *original =
       quadra_criar("01001", 10.5, 20.25, 30.0, 40.0, "blue", "black", 2.0);
   quadra_t *recriada;
-  quadra_registro_t registro;
+  quadra_registro_t *registro = malloc(quadra_registro_size());
 
   TEST_ASSERT_NOT_NULL(original);
-  TEST_ASSERT_EQUAL_INT(1, quadra_para_registro(original, &registro));
-  TEST_ASSERT_EQUAL_STRING("01001", registro.cep);
-  TEST_ASSERT_EQUAL_STRING("blue", registro.cor_preenchimento);
-  TEST_ASSERT_EQUAL_STRING("black", registro.cor_borda);
-  assert_double_igual(10.5, registro.x);
-  assert_double_igual(20.25, registro.y);
-  assert_double_igual(30.0, registro.largura);
-  assert_double_igual(40.0, registro.altura);
-  assert_double_igual(2.0, registro.espessura_borda);
+  TEST_ASSERT_NOT_NULL(registro);
+  TEST_ASSERT_EQUAL_INT(1, quadra_para_registro(original, registro));
+  TEST_ASSERT_EQUAL_STRING("01001", quadra_registro_cep(registro));
+  TEST_ASSERT_EQUAL_STRING("blue", quadra_registro_cor_preenchimento(registro));
+  TEST_ASSERT_EQUAL_STRING("black", quadra_registro_cor_borda(registro));
+  assert_double_igual(10.5, quadra_registro_x(registro));
+  assert_double_igual(20.25, quadra_registro_y(registro));
+  assert_double_igual(30.0, quadra_registro_largura(registro));
+  assert_double_igual(40.0, quadra_registro_altura(registro));
+  assert_double_igual(2.0, quadra_registro_espessura_borda(registro));
 
-  recriada = quadra_criar_de_registro(&registro);
+  recriada = quadra_criar_de_registro(registro);
+  free(registro);
   TEST_ASSERT_NOT_NULL(recriada);
   TEST_ASSERT_EQUAL_STRING(quadra_obter_cep(original), quadra_obter_cep(recriada));
   assert_double_igual(quadra_obter_x(original), quadra_obter_x(recriada));
@@ -95,10 +98,11 @@ void test_quadra_converte_para_registro_e_recria_quadra(void) {
 }
 
 void test_quadra_conversao_rejeita_argumentos_invalidos(void) {
-  quadra_registro_t registro;
+  quadra_registro_t *registro = malloc(quadra_registro_size());
 
-  TEST_ASSERT_EQUAL_INT(0, quadra_para_registro(NULL, &registro));
+  TEST_ASSERT_EQUAL_INT(0, quadra_para_registro(NULL, registro));
   TEST_ASSERT_NULL(quadra_criar_de_registro(NULL));
+  free(registro);
 }
 
 int main(void) {

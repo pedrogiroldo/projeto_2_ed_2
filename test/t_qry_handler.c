@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <math.h>
 
 static const char *QRY_PATH = "/tmp/t_qry.qry";
@@ -46,14 +47,10 @@ static void aresta2(Grafo g, const char *a, const char *b,
 
 static void inserir_quadra(extensible_hash_file_t hf, const char *cep,
                            double x, double y, double w, double h) {
-    quadra_registro_t r;
-    memset(&r, 0, sizeof(r));
-    strncpy(r.cep, cep, QUADRA_CEP_MAX);
-    r.x = x; r.y = y; r.largura = w; r.altura = h;
-    strncpy(r.cor_preenchimento, "white", QUADRA_COR_MAX);
-    strncpy(r.cor_borda, "black", QUADRA_COR_MAX);
-    r.espessura_borda = 1.0;
-    ehf_insert(hf, cep, &r, sizeof(r));
+    quadra_registro_t *r = malloc(quadra_registro_size());
+    quadra_registro_preencher(r, cep, x, y, w, h, "white", "black", 1.0);
+    ehf_insert(hf, cep, r, quadra_registro_size());
+    free(r);
 }
 
 /* ---- @o? ---- */
@@ -62,7 +59,7 @@ static void test_oo_armazena_coordenada(void) {
     grafo_inserir_vertice(g, "A", 0, 0);
 
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4, quadra_registro_size());
     inserir_quadra(hf, "01", 0, 0, 100, 50);
 
     Registradores regs = registradores_criar();

@@ -11,6 +11,8 @@
 #ifndef QUADRA_H
 #define QUADRA_H
 
+#include <stddef.h>
+
 /** Tamanho máximo do CEP (sem o terminador nulo). */
 #define QUADRA_CEP_MAX 32u
 
@@ -21,20 +23,56 @@
 typedef struct quadra quadra_t;
 
 /**
- * @brief Registro plano serializável para armazenamento em hashfile.
+ * @brief Registro plano serializável para armazenamento em hashfile (opaco).
  *
- * Chave do hashfile: campo @c cep.
+ * O layout é privado (definido em quadra.c). Aloque um buffer de
+ * quadra_registro_size() bytes, preencha com quadra_registro_preencher() e
+ * leia os campos com os getters quadra_registro_*(). A chave do hashfile é o
+ * CEP. Manipular o registro como bytes opacos evita expor a struct no header.
  */
-typedef struct {
-    char   cep[QUADRA_CEP_MAX + 1u];                /**< CEP da quadra (chave). */
-    double x;                                        /**< Coordenada X do canto superior esquerdo. */
-    double y;                                        /**< Coordenada Y do canto superior esquerdo. */
-    double largura;                                  /**< Largura em unidades do mapa. */
-    double altura;                                   /**< Altura em unidades do mapa. */
-    char   cor_preenchimento[QUADRA_COR_MAX + 1u];  /**< Cor de preenchimento (ex.: "blue", "#aabbcc"). */
-    char   cor_borda[QUADRA_COR_MAX + 1u];          /**< Cor da borda. */
-    double espessura_borda;                          /**< Espessura da borda em pixels. */
-} quadra_registro_t;
+typedef void quadra_registro_t;
+
+/**
+ * @brief Tamanho em bytes de um registro de quadra serializado.
+ *
+ * Use como record_size em ehf_create/ehf_insert/ehf_find.
+ */
+size_t quadra_registro_size(void);
+
+/**
+ * @brief Preenche um buffer de registro (>= quadra_registro_size() bytes).
+ *
+ * @param registro         Buffer de destino (não-NULL).
+ * @param cep              CEP (chave), truncado a QUADRA_CEP_MAX.
+ * @param x                Coordenada X do canto superior esquerdo.
+ * @param y                Coordenada Y do canto superior esquerdo.
+ * @param largura          Largura da quadra.
+ * @param altura           Altura da quadra.
+ * @param cor_preenchimento Cor de preenchimento.
+ * @param cor_borda        Cor da borda.
+ * @param espessura_borda  Espessura da borda.
+ */
+void quadra_registro_preencher(quadra_registro_t *registro, const char *cep,
+                               double x, double y, double largura, double altura,
+                               const char *cor_preenchimento,
+                               const char *cor_borda, double espessura_borda);
+
+/** @brief CEP armazenado no registro. */
+const char *quadra_registro_cep(const quadra_registro_t *registro);
+/** @brief Coordenada X do registro. */
+double quadra_registro_x(const quadra_registro_t *registro);
+/** @brief Coordenada Y do registro. */
+double quadra_registro_y(const quadra_registro_t *registro);
+/** @brief Largura do registro. */
+double quadra_registro_largura(const quadra_registro_t *registro);
+/** @brief Altura do registro. */
+double quadra_registro_altura(const quadra_registro_t *registro);
+/** @brief Cor de preenchimento do registro. */
+const char *quadra_registro_cor_preenchimento(const quadra_registro_t *registro);
+/** @brief Cor da borda do registro. */
+const char *quadra_registro_cor_borda(const quadra_registro_t *registro);
+/** @brief Espessura da borda do registro. */
+double quadra_registro_espessura_borda(const quadra_registro_t *registro);
 
 /**
  * @brief Cria uma quadra com os dados fornecidos.

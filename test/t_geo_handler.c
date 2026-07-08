@@ -4,6 +4,8 @@
 #include "quadra.h"
 #include "unity.h"
 
+#include <stdlib.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -30,9 +32,9 @@ void tearDown(void) {
 
 void test_geo_handler_insere_quadras_no_hashfile(void) {
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     geo_handler_resultado_t res;
-    quadra_registro_t reg;
+    quadra_registro_t *reg = malloc(quadra_registro_size());
 
     TEST_ASSERT_NOT_NULL(hf);
     write_geo("cq 2 #FF9966 #8B4513\n"
@@ -43,19 +45,20 @@ void test_geo_handler_insere_quadras_no_hashfile(void) {
 
     TEST_ASSERT_EQUAL_INT(2, geo_handler_resultado_inseridas(res));
     TEST_ASSERT_EQUAL_INT(0, geo_handler_resultado_erros(res));
-    TEST_ASSERT_EQUAL_INT(EHF_OK, ehf_find(hf, "cep1", &reg, sizeof(reg)));
-    TEST_ASSERT_EQUAL_INT(0, (int)reg.x);
-    TEST_ASSERT_EQUAL_INT(100, (int)reg.largura);
-    TEST_ASSERT_EQUAL_INT(EHF_OK, ehf_find(hf, "cep2", &reg, sizeof(reg)));
-    TEST_ASSERT_EQUAL_INT(100, (int)reg.x);
+    TEST_ASSERT_EQUAL_INT(EHF_OK, ehf_find(hf, "cep1", reg, quadra_registro_size()));
+    TEST_ASSERT_EQUAL_INT(0, (int)quadra_registro_x(reg));
+    TEST_ASSERT_EQUAL_INT(100, (int)quadra_registro_largura(reg));
+    TEST_ASSERT_EQUAL_INT(EHF_OK, ehf_find(hf, "cep2", reg, quadra_registro_size()));
+    TEST_ASSERT_EQUAL_INT(100, (int)quadra_registro_x(reg));
 
     geo_handler_resultado_destruir(res);
+    free(reg);
     ehf_close(hf);
 }
 
 void test_geo_handler_arquivo_vazio_zero_quadras(void) {
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     geo_handler_resultado_t res;
 
     TEST_ASSERT_NOT_NULL(hf);
@@ -71,7 +74,7 @@ void test_geo_handler_arquivo_vazio_zero_quadras(void) {
 
 void test_geo_handler_linha_malformada_conta_erro(void) {
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     geo_handler_resultado_t res;
 
     TEST_ASSERT_NOT_NULL(hf);
@@ -88,7 +91,7 @@ void test_geo_handler_linha_malformada_conta_erro(void) {
 
 void test_geo_handler_sem_cq_conta_erro(void) {
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     geo_handler_resultado_t res;
 
     TEST_ASSERT_NOT_NULL(hf);
@@ -105,7 +108,7 @@ void test_geo_handler_sem_cq_conta_erro(void) {
 
 void test_geo_handler_arquivo_nao_existe_conta_erro(void) {
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     geo_handler_resultado_t res;
 
     TEST_ASSERT_NOT_NULL(hf);
@@ -119,7 +122,7 @@ void test_geo_handler_arquivo_nao_existe_conta_erro(void) {
 
 void test_geo_handler_null_path_conta_erro(void) {
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     geo_handler_resultado_t res;
 
     TEST_ASSERT_NOT_NULL(hf);
@@ -133,7 +136,7 @@ void test_geo_handler_null_path_conta_erro(void) {
 void test_geo_handler_quadra_gera_svg(void) {
     static const char *SVG_PATH = "/tmp/geo_handler_test.svg";
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     svg_writer_t *svg = svg_writer_criar(SVG_PATH, 400.0, 400.0);
     geo_handler_resultado_t res;
     FILE *f;
@@ -165,9 +168,9 @@ void test_geo_handler_quadra_gera_svg(void) {
 
 void test_geo_handler_aceita_cq_com_px(void) {
     extensible_hash_file_t hf =
-        ehf_create(HF_PATH, 4u, sizeof(quadra_registro_t));
+        ehf_create(HF_PATH, 4u, quadra_registro_size());
     geo_handler_resultado_t res;
-    quadra_registro_t reg;
+    quadra_registro_t *reg = malloc(quadra_registro_size());
 
     TEST_ASSERT_NOT_NULL(hf);
     write_geo("cq 1.0px Olive Moccasin\n"
@@ -177,9 +180,10 @@ void test_geo_handler_aceita_cq_com_px(void) {
 
     TEST_ASSERT_EQUAL_INT(1, geo_handler_resultado_inseridas(res));
     TEST_ASSERT_EQUAL_INT(0, geo_handler_resultado_erros(res));
-    TEST_ASSERT_EQUAL_INT(EHF_OK, ehf_find(hf, "b01.1", &reg, sizeof(reg)));
+    TEST_ASSERT_EQUAL_INT(EHF_OK, ehf_find(hf, "b01.1", reg, quadra_registro_size()));
 
     geo_handler_resultado_destruir(res);
+    free(reg);
     ehf_close(hf);
 }
 

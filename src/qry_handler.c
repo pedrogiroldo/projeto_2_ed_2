@@ -79,14 +79,21 @@ static int handle_oo(const char *linha, Grafo g,
     int idx = reg_indice(reg);
     if (idx < 0) return -1;
 
-    quadra_registro_t registro;
-    if (!hf || ehf_find(hf, cep, &registro, sizeof(registro)) != EHF_OK)
+    quadra_registro_t *registro = malloc(quadra_registro_size());
+    if (!registro) return -1;
+    if (!hf || ehf_find(hf, cep, registro, quadra_registro_size()) != EHF_OK) {
+        free(registro);
         return -1;
+    }
 
     double x, y;
-    if (!reg_coordenada_endereco(registro.x, registro.y,
-                                 registro.largura, registro.altura,
-                                 face_str[0], num, &x, &y))
+    int ok = reg_coordenada_endereco(quadra_registro_x(registro),
+                                     quadra_registro_y(registro),
+                                     quadra_registro_largura(registro),
+                                     quadra_registro_altura(registro),
+                                     face_str[0], num, &x, &y);
+    free(registro);
+    if (!ok)
         return -1;
 
     reg_armazenar(regs, idx, x, y);

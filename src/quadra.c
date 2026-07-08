@@ -160,6 +160,98 @@ double quadra_obter_espessura_borda(const quadra_t *quadra)
   return quadra == NULL ? 0.0 : quadra->espessura_borda;
 }
 
+/* ---- Registro serializável (layout privado) ---- */
+
+typedef struct
+{
+  char   cep[QUADRA_CEP_MAX + 1u];
+  double x;
+  double y;
+  double largura;
+  double altura;
+  char   cor_preenchimento[QUADRA_COR_MAX + 1u];
+  char   cor_borda[QUADRA_COR_MAX + 1u];
+  double espessura_borda;
+} quadra_registro_s;
+
+size_t quadra_registro_size(void)
+{
+  return sizeof(quadra_registro_s);
+}
+
+void quadra_registro_preencher(quadra_registro_t *registro, const char *cep,
+                               double x, double y, double largura, double altura,
+                               const char *cor_preenchimento,
+                               const char *cor_borda, double espessura_borda)
+{
+  quadra_registro_s *r = (quadra_registro_s *)registro;
+
+  if (r == NULL)
+  {
+    return;
+  }
+
+  memset(r, 0, sizeof(*r));
+  if (cep != NULL)
+    quadra_copiar_campo(r->cep, sizeof(r->cep), cep);
+  if (cor_preenchimento != NULL)
+    quadra_copiar_campo(r->cor_preenchimento, sizeof(r->cor_preenchimento),
+                        cor_preenchimento);
+  if (cor_borda != NULL)
+    quadra_copiar_campo(r->cor_borda, sizeof(r->cor_borda), cor_borda);
+  r->x = x;
+  r->y = y;
+  r->largura = largura;
+  r->altura = altura;
+  r->espessura_borda = espessura_borda;
+}
+
+const char *quadra_registro_cep(const quadra_registro_t *registro)
+{
+  return registro == NULL ? NULL : ((const quadra_registro_s *)registro)->cep;
+}
+
+double quadra_registro_x(const quadra_registro_t *registro)
+{
+  return registro == NULL ? 0.0 : ((const quadra_registro_s *)registro)->x;
+}
+
+double quadra_registro_y(const quadra_registro_t *registro)
+{
+  return registro == NULL ? 0.0 : ((const quadra_registro_s *)registro)->y;
+}
+
+double quadra_registro_largura(const quadra_registro_t *registro)
+{
+  return registro == NULL ? 0.0 : ((const quadra_registro_s *)registro)->largura;
+}
+
+double quadra_registro_altura(const quadra_registro_t *registro)
+{
+  return registro == NULL ? 0.0 : ((const quadra_registro_s *)registro)->altura;
+}
+
+const char *quadra_registro_cor_preenchimento(const quadra_registro_t *registro)
+{
+  return registro == NULL
+             ? NULL
+             : ((const quadra_registro_s *)registro)->cor_preenchimento;
+}
+
+const char *quadra_registro_cor_borda(const quadra_registro_t *registro)
+{
+  return registro == NULL
+             ? NULL
+             : ((const quadra_registro_s *)registro)->cor_borda;
+}
+
+double quadra_registro_espessura_borda(const quadra_registro_t *registro)
+{
+  return registro == NULL
+             ? 0.0
+             : ((const quadra_registro_s *)registro)->espessura_borda;
+}
+
 int quadra_para_registro(const quadra_t *quadra, quadra_registro_t *registro)
 {
   if (quadra == NULL || registro == NULL)
@@ -167,23 +259,10 @@ int quadra_para_registro(const quadra_t *quadra, quadra_registro_t *registro)
     return 0;
   }
 
-  memset(registro, 0, sizeof(*registro));
-  if (!quadra_copiar_campo(registro->cep, sizeof(registro->cep), quadra->cep) ||
-      !quadra_copiar_campo(registro->cor_preenchimento,
-                           sizeof(registro->cor_preenchimento),
-                           quadra->cor_preenchimento) ||
-      !quadra_copiar_campo(registro->cor_borda, sizeof(registro->cor_borda),
-                           quadra->cor_borda))
-  {
-    return 0;
-  }
-
-  registro->x = quadra->x;
-  registro->y = quadra->y;
-  registro->largura = quadra->largura;
-  registro->altura = quadra->altura;
-  registro->espessura_borda = quadra->espessura_borda;
-
+  quadra_registro_preencher(registro, quadra->cep, quadra->x, quadra->y,
+                            quadra->largura, quadra->altura,
+                            quadra->cor_preenchimento, quadra->cor_borda,
+                            quadra->espessura_borda);
   return 1;
 }
 
@@ -194,8 +273,11 @@ quadra_t *quadra_criar_de_registro(const quadra_registro_t *registro)
     return NULL;
   }
 
-  return quadra_criar(registro->cep, registro->x, registro->y,
-                      registro->largura, registro->altura,
-                      registro->cor_preenchimento, registro->cor_borda,
-                      registro->espessura_borda);
+  return quadra_criar(quadra_registro_cep(registro),
+                      quadra_registro_x(registro), quadra_registro_y(registro),
+                      quadra_registro_largura(registro),
+                      quadra_registro_altura(registro),
+                      quadra_registro_cor_preenchimento(registro),
+                      quadra_registro_cor_borda(registro),
+                      quadra_registro_espessura_borda(registro));
 }
